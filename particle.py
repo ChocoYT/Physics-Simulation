@@ -1,11 +1,10 @@
 import pygame
 
-G = 1
+from settings import *
 
-class Particle():
+class Particle:
     def __init__(self, x: int,  y: int, mass: float, size: int, colour: tuple[int]) -> None:
         self.x, self.y = x, y
-        self.pos = self.x, self.y
         self.xVel, self.yVel = 0, 0
         
         self.mass = mass
@@ -19,32 +18,36 @@ class Particle():
         self.image.set_colorkey((0, 0, 0))
         
         self.rect = self.image.get_rect()
-        self.rect.topleft = self.pos
+        
+        self.update()
+        
+        particles.add(self)
         
     def move(self) -> None:
         for particle in particles:
             if not self is particle:
-                xDist = particle.rect.x - self.x
-                yDist = particle.rect.y - self.y
-                dist = ((xDist ** 2) + (yDist ** 2)) ** 0.5
                 
-                if dist > 1:
-                    xDist /= dist
-                    yDist /= dist
+                dist = pygame.Vector2(particle.x, particle.y) - pygame.Vector2(self.x, self.y)
                 
-                    force = (G * self.mass * particle.mass) / (dist ** 2)
+                if dist.x == 0 and dist.y == 0:  continue
+                
+                normalisedDist = dist.normalize()
+                magnitude      = dist.magnitude()
+                
+                # Apply Gravity
+                if magnitude >= 1:
+                    force = Constants.G * particle.mass / dist.magnitude_squared()
 
-                    self.xVel += (force / self.mass) * xDist
-                    self.yVel += (force / self.mass) * yDist
-        
+                    self.xVel += force * normalisedDist.x
+                    self.yVel += force * normalisedDist.y
+                            
         self.x += self.xVel
         self.y += self.yVel
         
     def update(self) -> None:
-        self.pos = self.x, self.y
-        self.rect.topleft = self.pos
+        self.rect.center = self.x, self.y
     
     def draw(self, surface: pygame.Surface) -> None:
-        surface.blit(self.image, self.rect.center)
+        surface.blit(self.image, self.rect.topleft)
         
-particles = set()
+particles: set[Particle] = set()

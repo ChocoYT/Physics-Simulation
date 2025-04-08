@@ -1,47 +1,37 @@
-from configparser import ConfigParser
 import pygame
-import random
-from os import getcwd
 
-from particle import Particle, particles
+from events import Events
+from particle import particles
+from settings import *
 
-path = getcwd()
+from Particles import Quarks, Leptons
+
+pygame.init()
 
 if __name__ == "__main__":
-    # Load Config
-    defaults = ConfigParser()
-    defaults.read(f"{path}\\defaults.ini")
-    
-    # Initialise Variables
-    screenWidth  = int(defaults['screen']['width'])
-    screenHeight = int(defaults['screen']['height'])
-    FPS          = int(defaults['screen']['FPS'])
-    aspectRatio  = screenWidth / screenHeight
 
     # Initialise Screen
-    screen = pygame.display.set_mode((screenWidth, screenHeight))
+    screen = pygame.display.set_mode((Screen.width, Screen.height))
     pygame.display.set_caption("Physics Simulation")
     clock = pygame.time.Clock()
     
-    # Spawn Particles
-    length = 16
-    for x in range(length):
-        for y in range(length):
-            spawnX = x * (screenHeight / length) + ((screenWidth - screenHeight) / 2)
-            spawnY = y * (screenHeight / length)
-            
-            particles.add(
-                Particle(spawnX, spawnY, random.randint(1, 100), 5, (255, 255, 255))
-            )
+    mousePosition = pygame.Vector2(pygame.mouse.get_pos())
+    mouseButton = pygame.mouse.get_pressed()
+    
+    events = Events()
     
     # Main Loop
-    run = True
-    while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-        
+    while True:
         screen.fill((0, 0, 0))
+        
+        mousePosition = events.getMousePosition()
+        
+        if events.isMouseButtonPressed(0):
+            Quarks.Up(mousePosition)
+        if events.isMouseButtonPressed(1):
+            Leptons.Electron(mousePosition)
+        if events.isMouseButtonPressed(2):
+            Quarks.Down(mousePosition)
         
         # Simulate Particles
         for particle in particles:
@@ -49,9 +39,8 @@ if __name__ == "__main__":
         for particle in particles:
             particle.update()
             particle.draw(screen)
+            
+        events.update(pygame.event.get())
         
         pygame.display.update()
-        clock.tick(FPS)
-            
-pygame.quit()
-exit()
+        clock.tick(Screen.FPS)
